@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel PMP — Almoxarifado</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --bg2: #181c26;
+      --bg3: #1e2333;
+      --border: #2a2f42;
+      --text: #e8eaf0;
+      --text2: #8b90a4;
+      --blue: #4a90e2;
+      --blue-bg: rgba(74,144,226,0.12);
+      --yellow: #f5a623;
+      --yellow-bg: rgba(245,166,35,0.12);
+      --red: #e05c5c;
+      --red-bg: rgba(224,92,92,0.12);
+      --green: #4caf7d;
+      --green-bg: rgba(76,175,125,0.12);
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    /* HEADER */
+    .header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header-left { display: flex; align-items: baseline; gap: 12px; }
+    .header-title { font-size: 18px; font-weight: 600; color: var(--text); }
+    .header-sub { font-size: 12px; color: var(--text2); }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .date-label { font-size: 12px; color: var(--text2); }
+    .btn-refresh {
+      font-size: 12px; padding: 7px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text);
+      cursor: pointer;
+      transition: background .15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-refresh:hover { background: var(--border); }
+    .spinner { display: none; width: 13px; height: 13px; border: 2px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin .7s linear infinite; }
+    .spinner.active { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* MAIN */
+    .main { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
+
+    /* METRICS */
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+    .metric {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .metric::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .metric.blue::before { background: var(--blue); }
+    .metric.yellow::before { background: var(--yellow); }
+    .metric.red::before { background: var(--red); }
+    .metric.green::before { background: var(--green); }
+    .metric-label { font-size: 11px; color: var(--text2); margin-bottom: 8px; line-height: 1.4; text-transform: uppercase; letter-spacing: .04em; }
+    .metric-value { font-size: 28px; font-weight: 600; }
+    .metric.blue .metric-value { color: var(--blue); }
+    .metric.yellow .metric-value { color: var(--yellow); }
+    .metric.red .metric-value { color: var(--red); }
+    .metric.green .metric-value { color: var(--green); }
+
+    /* STEP BAR */
+    .step-bar { display: flex; margin-bottom: 24px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+    .step { flex: 1; padding: 10px 8px; font-size: 11px; font-weight: 500; text-align: center; border-right: 1px solid var(--border); }
+    .step:last-child { border-right: none; }
+    .step.s1 { background: var(--blue-bg); color: var(--blue); }
+    .step.s2 { background: var(--yellow-bg); color: var(--yellow); }
+    .step.s3 { background: var(--red-bg); color: var(--red); }
+    .step.s4 { background: var(--green-bg); color: var(--green); }
+
+    /* TABS */
+    .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+    .tab {
+      padding: 9px 18px; font-size: 13px; color: var(--text2);
+      cursor: pointer; border-bottom: 2px solid transparent;
+      margin-bottom: -1px; transition: color .15s; white-space: nowrap;
+    }
+    .tab.active { color: var(--text); border-bottom-color: var(--blue); }
+    .tab:hover:not(.active) { color: var(--text); }
+
+    /* PANEL */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* TABLE */
+    .card-table {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .row-header { display: flex; align-items: center; margin-bottom: 14px; }
+    .row-header h2 { font-size: 14px; font-weight: 500; color: var(--text); }
+    .row-count { font-size: 12px; font-weight: 400; color: var(--text2); margin-left: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; table-layout: fixed; }
+    thead th {
+      text-align: left; font-weight: 500; font-size: 11px;
+      color: var(--text2); padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase; letter-spacing: .04em;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--bg3); }
+    tbody td { padding: 11px 14px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* BADGES */
+    .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+    .badge-blue { background: var(--blue-bg); color: var(--blue); }
+    .badge-yellow { background: var(--yellow-bg); color: var(--yellow); }
+    .badge-red { background: var(--red-bg); color: var(--red); }
+    .badge-green { background: var(--green-bg); color: var(--green); }
+    .badge-muted { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
+
+    .muted { color: var(--text2); }
+    .empty { text-align: center; padding: 40px; font-size: 13px; color: var(--text2); }
+    .error { text-align: center; padding: 40px; font-size: 13px; color: var(--red); }
+
+    @media (max-width: 900px) {
+      .main { padding: 16px; }
+      .header { padding: 14px 16px; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .step-bar { display: none; }
+    }
+    @media (max-width: 600px) {
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .header-right .date-label { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-left">
+      <span class="header-title">Reservas — Almoxarifado</span>
+      <span class="header-sub">PMP · Matéria-prima</span>
+    </div>
+    <div class="header-right">
+      <span class="date-label" id="hoje"></span>
+      <button class="btn-refresh" onclick="loadData()">
+        <div class="spinner" id="spinner"></div>
+        ↻ Atualizar
+      </button>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <div class="metrics">
+      <div class="metric blue">
+        <div class="metric-label">Reserva gerada<br>Aguard. logística</div>
+        <div class="metric-value" id="m1">—</div>
+      </div>
+      <div class="metric yellow">
+        <div class="metric-label">Doc. movimentação<br>recebido</div>
+        <div class="metric-value" id="m2">—</div>
+      </div>
+      <div class="metric red">
+        <div class="metric-label">Aguardando<br>baixa</div>
+        <div class="metric-value" id="m3">—</div>
+      </div>
+      <div class="metric green">
+        <div class="metric-label">Processo<br>concluído</div>
+        <div class="metric-value" id="m4">—</div>
+      </div>
+    </div>
+
+    <div class="step-bar">
+      <div class="step s1">1 · Reserva gerada</div>
+      <div class="step s2">2 · Aguard. mov. logística</div>
+      <div class="step s3">3 · Aguard. baixa</div>
+      <div class="step s4">4 · Concluído</div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('todas', this)">Todas</div>
+      <div class="tab" onclick="switchTab('etapa1', this)">Reserva gerada</div>
+      <div class="tab" onclick="switchTab('etapa2', this)">Aguard. logística</div>
+      <div class="tab" onclick="switchTab('etapa3', this)">Aguard. baixa</div>
+      <div class="tab" onclick="switchTab('concluido', this)">Concluídos</div>
+    </div>
+
+    <div id="todas" class="panel active"><div class="empty">Carregando dados...</div></div>
+    <div id="etapa1" class="panel"></div>
+    <div id="etapa2" class="panel"></div>
+    <div id="etapa3" class="panel"></div>
+    <div id="concluido" class="panel"></div>
+
+  </main>
+
+  <script>
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQqFcLMbiv3S40ZtHzIHRxSW2cYzD0oQANv7Xdb9JTNLOdOXwVSIxllB-DHJVJDdohupUOPkOBnBx2y/pub?gid=0&single=true&output=csv';
+
+    const badgeMap = {
+      '1': '<span class="badge badge-blue">Reserva gerada</span>',
+      '2': '<span class="badge badge-yellow">Aguard. logística</span>',
+      '3': '<span class="badge badge-red">Aguard. baixa</span>',
+      '4': '<span class="badge badge-green">Concluído</span>',
+    };
+
+    function dash(v) {
+      return (v && v.trim()) ? v.trim() : '<span class="muted">—</span>';
+    }
+
+    function parseCSV(text) {
+      const lines = text.trim().split('\n');
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      return lines.slice(1).map(line => {
+        const vals = [];
+        let cur = '', inQ = false;
+        for (let i = 0; i < line.length; i++) {
+          if (line[i] === '"') { inQ = !inQ; }
+          else if (line[i] === ',' && !inQ) { vals.push(cur.trim()); cur = ''; }
+          else { cur += line[i]; }
+        }
+        vals.push(cur.trim());
+        const obj = {};
+        headers.forEach((h, i) => { obj[h] = (vals[i] || '').replace(/"/g, '').trim(); });
+        return obj;
+      }).filter(r => r.nro_material && r.nro_material !== '');
+    }
+
+    function buildTable(rows) {
+      if (!rows.length) return '<div class="empty">Nenhum registro nesta etapa.</div>';
+      return `<div class="card-table"><table>
+        <colgroup>
+          <col style="width:11%"><col style="width:26%"><col style="width:6%"><col style="width:10%">
+          <col style="width:13%"><col style="width:14%"><col style="width:11%"><col style="width:9%">
+        </colgroup>
+        <thead><tr>
+          <th>Nº material</th><th>Descrição</th><th>Un</th><th>Quantidade</th>
+          <th>Doc. reserva</th><th>Doc. movimentação</th><th>Doc. baixa</th><th>Status</th>
+        </tr></thead>
+        <tbody>${rows.map(r => `<tr>
+          <td>${r.nro_material}</td>
+          <td title="${r.descricao || ''}">${r.descricao || '<span class="muted">—</span>'}</td>
+          <td>${dash(r.unidade)}</td>
+          <td>${dash(r.quantidade)}</td>
+          <td>${dash(r.doc_reserva)}</td>
+          <td>${dash(r.doc_movimentacao)}</td>
+          <td>${dash(r.doc_baixa)}</td>
+          <td>${badgeMap[r.status] || '<span class="badge badge-muted">—</span>'}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+    }
+
+    function header(title, count) {
+      return `<div class="row-header"><h2>${title}</h2><span class="row-count">(${count})</span></div>`;
+    }
+
+    function render(data) {
+      const c = {'1':0,'2':0,'3':0,'4':0};
+      data.forEach(r => { if (c[r.status] !== undefined) c[r.status]++; });
+      document.getElementById('m1').textContent = c['1'];
+      document.getElementById('m2').textContent = c['2'];
+      document.getElementById('m3').textContent = c['3'];
+      document.getElementById('m4').textContent = c['4'];
+      document.getElementById('todas').innerHTML   = header('Todas as reservas', data.length) + buildTable(data);
+      document.getElementById('etapa1').innerHTML  = header('Reserva gerada', c['1'])         + buildTable(data.filter(r=>r.status==='1'));
+      document.getElementById('etapa2').innerHTML  = header('Aguardando logística', c['2'])   + buildTable(data.filter(r=>r.status==='2'));
+      document.getElementById('etapa3').innerHTML  = header('Aguardando baixa', c['3'])       + buildTable(data.filter(r=>r.status==='3'));
+      document.getElementById('concluido').innerHTML = header('Concluídos', c['4'])           + buildTable(data.filter(r=>r.status==='4'));
+    }
+
+    async function loadData() {
+      const spinner = document.getElementById('spinner');
+      spinner.classList.add('active');
+      try {
+        const res = await fetch(CSV_URL + '&cachebust=' + Date.now());
+        const text = await res.text();
+        const data = parseCSV(text);
+        if (data.length === 0) {
+          document.getElementById('todas').innerHTML = '<div class="empty">Planilha conectada! Adicione registros no Sheets para aparecerem aqui.</div>';
+          ['m1','m2','m3','m4'].forEach(id => document.getElementById(id).textContent = '0');
+        } else {
+          render(data);
+        }
+      } catch(e) {
+        document.getElementById('todas').innerHTML = '<div class="error">Erro ao carregar dados. Verifique se a planilha está publicada como CSV.</div>';
+      } finally {
+        spinner.classList.remove('active');
+      }
+    }
+
+    function switchTab(id, el) {
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      el.classList.add('active');
+    }
+
+    document.getElementById('hoje').textContent = new Date().toLocaleDateString('pt-BR', {
+      weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
+    });
+
+    loadData();
+  </script>
+</body>
+</html>

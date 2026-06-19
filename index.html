@@ -183,11 +183,11 @@
 
     <div class="metrics">
       <div class="metric blue">
-        <div class="metric-label">Reserva gerada<br>Aguard. logística</div>
+        <div class="metric-label">Reserva gerada<br>Aguardando logística</div>
         <div class="metric-value" id="m1">—</div>
       </div>
       <div class="metric yellow">
-        <div class="metric-label">Doc. movimentação<br>recebido</div>
+        <div class="metric-label">Documento de movimentação<br>recebido</div>
         <div class="metric-value" id="m2">—</div>
       </div>
       <div class="metric red">
@@ -202,8 +202,8 @@
 
     <div class="step-bar">
       <div class="step s1">1 · Reserva gerada</div>
-      <div class="step s2">2 · Aguard. mov. logística</div>
-      <div class="step s3">3 · Aguard. baixa</div>
+      <div class="step s2">2 · Aguardando logística</div>
+      <div class="step s3">3 · Aguardando baixa</div>
       <div class="step s4">4 · Concluído</div>
     </div>
 
@@ -264,14 +264,14 @@
         </colgroup>
         <thead><tr>
           <th>Nº material</th><th>Descrição</th><th>Un</th><th>Quantidade</th>
-          <th>Doc. reserva</th><th>Doc. movimentação</th><th>Doc. baixa</th><th>Status</th>
+          <th>N° reserva</th><th>Doc. movimentação</th><th>Doc. baixa</th><th>Status</th>
         </tr></thead>
         <tbody>${rows.map(r => `<tr>
           <td>${r.nro_material}</td>
           <td title="${r.descricao || ''}">${r.descricao || '<span class="muted">—</span>'}</td>
           <td>${dash(r.unidade)}</td>
           <td>${dash(r.quantidade)}</td>
-          <td>${dash(r.doc_reserva)}</td>
+          <td>${dash(r.n°_reserva)}</td>
           <td>${dash(r.doc_movimentacao)}</td>
           <td>${dash(r.doc_baixa)}</td>
           <td>${badgeMap[r.status] || '<span class="badge badge-muted">—</span>'}</td>
